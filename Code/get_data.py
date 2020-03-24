@@ -12,7 +12,6 @@ if __name__ == '__main__':
     bgr = {'yellow':(52,232,235),'orange':(52,137,235),'green':(52,235,86)}
     for color in colors:
         path = '../Training/'+color
-        print(path)
         if os.path.exists(path):
 
             for img in os.listdir(path):
@@ -70,6 +69,8 @@ if __name__ == '__main__':
                     # cv2.destroyWindow('Bouy')
                     path = '../Training/'+color+'/'+str(count)+'.png'
                     cv2.imwrite(path,bouy)
+                    print('The image was saved')
+                    print()
                     
             if bouy_count == 0:
                 video.release()
