@@ -9,6 +9,8 @@ def GaussianNormal(Sigma, x, mu):
 	exponent=-.5*np.transpose(x-mu)*np.linalg.inv(Sigma)*(x-mu)
 	print(exponent)
 
+	print(np.linalg.det(Sigma))
+
 	p=(1/math.sqrt((2*math.pi())**3*np.linalg.det(Sigma)))#*math.exp(exponent)
 
 	return p
@@ -36,9 +38,9 @@ def GaussianMixtureModel(K, dataset):
 		alpha_k=1/K
 		alpha.append(alpha_k)
 
-		mu_b=random.randint(0,255)
-		mu_g=random.randint(0,255)
-		mu_r=random.randint(0,255)
+		mu_b=random.randint(0,int(math.sqrt(255)))
+		mu_g=random.randint(0,int(math.sqrt(255)))
+		mu_r=random.randint(0,int(math.sqrt(255)))
 
 		mu_k=[mu_b, mu_g, mu_r]
 		mu.append(mu_k)
