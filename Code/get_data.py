@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import os
 import random
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def bouy_images(filename,colors):
@@ -132,12 +134,33 @@ def sort_data(path,colors):
                 path = test_path + '/' + img_name
                 cv2.imwrite(path,img)
 
+def generate_dataset(path):
+    dataset = []
+    for img_name in os.listdir(path):
+        if img_name.endswith('.png'):
+            img = cv2.imread(path+'/'+img_name)
+            b = img[:,:,0].flatten()
+            g = img[:,:,1].flatten()
+            r = img[:,:,2].flatten()
+            data = np.stack((b, g, r))
+
+            idx = np.argwhere(np.all(data[..., :] == 0, axis=0))
+
+            nonzero = np.delete(data, idx, axis=1)
+            if len(dataset) == 0:
+                dataset = np.append(dataset,nonzero)
+            else:
+                dataset = nonzero
+    return dataset
+
 
 
 if __name__ == '__main__':
 
     get_new_raw = False
+    sort_data = False
     bouy_colors = ['yellow','orange','green']
+    # rgb = {'yellow':(235,232,52),'orange':(235,137,52),'green':(86,235,52)}
 
     if get_new_raw:
         print('Running this program will ovewrite all previous data')
@@ -148,8 +171,43 @@ if __name__ == '__main__':
             bouy_images(filename,bouy_colors)
         else:
             exit()
+    if sort_data:
+        sort_data('Raw Data',bouy_colors)
 
-    sort_data('Raw Data',bouy_colors)
+    training_data = {}
+    testing_data = {}
+    for color in bouy_colors:
+        train_path = 'Training Data/'+color
+        test_path = 'Testing Data/'+color
+
+        train_data= generate_dataset(train_path)
+        test_data= generate_dataset(test_path)
+
+        training_data[color] = train_data
+        testing_data[color] = test_data
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for color in bouy_colors:
+        data = training_data[color]
+        b = data[0,:]
+        g = data[1,:]
+        r = data[2,:]
+        ax.scatter(b,g,r,color = color)
+
+    ax.set_xlabel('Blue')
+    ax.set_ylabel('Green')
+    ax.set_zlabel('Red')
+
+    plt.show()
+
+    
+
+
+
+
+
 
 
     
