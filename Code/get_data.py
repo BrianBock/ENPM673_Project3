@@ -1,19 +1,17 @@
 import cv2 
 import numpy as np
 import os
+import random
 
 
-if __name__ == '__main__':
-    filename = '../media/detectbuoy.avi'
+def bouy_images(filename,colors):
     video = cv2.VideoCapture(filename)
     tot_frames = int(video.get(7))
     count = 0
-    colors = ['yellow','orange','green']
-    bgr = {'yellow':(52,232,235),'orange':(52,137,235),'green':(52,235,86)}
+    bgr = {colors[0]:(52,232,235),colors[1]:(52,137,235),colors[2]:(52,235,86)}
     for color in colors:
-        path = '../Training/'+color
+        path = 'Raw Data/'+color
         if os.path.exists(path):
-
             for img in os.listdir(path):
                 if img.endswith('.png'):
                     os.remove(path+'/'+img)
@@ -67,7 +65,7 @@ if __name__ == '__main__':
                     # cv2.imshow('Bouy',bouy) 
                     # cv2.waitkey(0)
                     # cv2.destroyWindow('Bouy')
-                    path = '../Training/'+color+'/'+str(count)+'.png'
+                    path = 'Raw Data/'+color+'/'+str(count)+'.png'
                     cv2.imwrite(path,bouy)
                     print('The image was saved')
                     print()
@@ -79,3 +77,79 @@ if __name__ == '__main__':
             count +=1
         else:
             video.release()
+
+
+def sort_data(path,colors):
+    image_paths = {}
+
+    # Store the paths for all images in image_paths
+    for color in colors:
+        paths = []
+        color_path = path + '/' + color
+        if os.path.exists(color_path):
+            for img in os.listdir(color_path):
+                if img.endswith('.png'):
+                    paths.append(color_path+'/'+img)
+        image_paths[color] = paths
+
+    # Get indicies for training and testing and put images into relevant folder
+    for color in colors:
+        path_list = image_paths[color]
+    
+        tot = len(path_list)
+        train = int(.7*tot)
+
+        train_inds = []
+        while len(train_inds) < train:
+            rand_ind = random.randint(0,tot-1)
+            if rand_ind not in train_inds:
+                train_inds.append(rand_ind)
+
+        train_path = 'Training Data/'+color
+        if os.path.exists(train_path):
+            for img in os.listdir(train_path):
+                if img.endswith('.png'):
+                    os.remove(train_path+'/'+img)
+        else:
+            os.mkdir(train_path)
+        
+        test_path = 'Testing Data/'+color
+        if os.path.exists(test_path):
+            for img in os.listdir(test_path):
+                if img.endswith('.png'):
+                    os.remove(test_path+'/'+img)
+        else:
+            os.mkdir(test_path)
+
+        for ind,path in enumerate(path_list):
+            img = cv2.imread(path)
+            img_name = path.split('/')[-1]
+            
+            if ind in train_inds:
+                path = train_path + '/' + img_name
+                cv2.imwrite(path,img)
+            else:
+                path = test_path + '/' + img_name
+                cv2.imwrite(path,img)
+
+
+
+if __name__ == '__main__':
+
+    get_new_raw = False
+    bouy_colors = ['yellow','orange','green']
+
+    if get_new_raw:
+        print('Running this program will ovewrite all previous data')
+        ans_str = input('Press y to continue: ')
+
+        if ans_str == 'y' or ans_str == 'Y': 
+            filename = '../media/detectbuoy.avi'
+            bouy_images(filename,bouy_colors)
+        else:
+            exit()
+
+    sort_data('Raw Data',bouy_colors)
+
+
+    
