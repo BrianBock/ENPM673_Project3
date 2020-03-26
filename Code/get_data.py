@@ -134,15 +134,22 @@ def sort_data(path,colors):
                 path = test_path + '/' + img_name
                 cv2.imwrite(path,img)
 
-def generate_dataset(path):
+def generate_dataset(path,colorspace):
     dataset = []
     for img_name in os.listdir(path):
         if img_name.endswith('.png'):
             img = cv2.imread(path+'/'+img_name)
-            b = img[:,:,0].flatten()
-            g = img[:,:,1].flatten()
-            r = img[:,:,2].flatten()
-            data = np.stack((b, g, r))
+            if colorspace == 'BGR':
+                b = img[:,:,0].flatten()
+                g = img[:,:,1].flatten()
+                r = img[:,:,2].flatten()
+                data = np.stack((b, g, r))
+            elif colorspace == 'HSV':
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                h = img[:,:,0].flatten()
+                s = img[:,:,1].flatten()
+                v = img[:,:,2].flatten()
+                data = np.stack((h, s, v))
 
             idx = np.argwhere(np.all(data[..., :] == 0, axis=0))
 
@@ -160,7 +167,7 @@ if __name__ == '__main__':
     get_new_raw = False
     sort_data = False
     bouy_colors = ['yellow','orange','green']
-    # rgb = {'yellow':(235,232,52),'orange':(235,137,52),'green':(86,235,52)}
+    colorspace = 'HSV' #HSV or BGR
 
     if get_new_raw:
         print('Running this program will ovewrite all previous data')
@@ -180,8 +187,8 @@ if __name__ == '__main__':
         train_path = 'Training Data/'+color
         test_path = 'Testing Data/'+color
 
-        train_data= generate_dataset(train_path)
-        test_data= generate_dataset(test_path)
+        train_data= generate_dataset(train_path,colorspace)
+        test_data= generate_dataset(test_path,colorspace)
 
         training_data[color] = train_data
         testing_data[color] = test_data
@@ -189,16 +196,29 @@ if __name__ == '__main__':
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    for color in bouy_colors:
-        data = training_data[color]
-        b = data[0,:]
-        g = data[1,:]
-        r = data[2,:]
-        ax.scatter(b,g,r,color = color)
+    if colorspace == 'BGR':
+        for color in bouy_colors:
+            data = training_data[color]
+            b = data[0,:]
+            g = data[1,:]
+            r = data[2,:]
+            ax.scatter(b,g,r,color = color)
 
-    ax.set_xlabel('Blue')
-    ax.set_ylabel('Green')
-    ax.set_zlabel('Red')
+        ax.set_xlabel('Blue')
+        ax.set_ylabel('Green')
+        ax.set_zlabel('Red')
+    elif colorspace == 'HSV':
+        for color in bouy_colors:
+            data = training_data[color]
+            h = data[0,:]
+            s = data[1,:]
+            v = data[2,:]
+            ax.scatter(h,s,v,color = color)
+
+        ax.set_xlabel('Hue')
+        ax.set_ylabel('Saturation')
+        ax.set_zlabel('Value')
+
 
     plt.show()
 
