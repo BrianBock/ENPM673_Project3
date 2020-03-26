@@ -162,10 +162,11 @@ def generate_dataset(path,colorspace):
 
 
 
+
 if __name__ == '__main__':
 
     get_new_raw = False
-    sort_data = False
+    sort = True
     bouy_colors = ['yellow','orange','green']
     colorspace = 'HSV' #HSV or BGR
 
@@ -173,12 +174,12 @@ if __name__ == '__main__':
         print('Running this program will ovewrite all previous data')
         ans_str = input('Press y to continue: ')
 
-        if ans_str == 'y' or ans_str == 'Y': 
+        if ans_str.lower() == 'y':
             filename = '../media/detectbuoy.avi'
             bouy_images(filename,bouy_colors)
         else:
             exit()
-    if sort_data:
+    if sort:
         sort_data('Raw Data',bouy_colors)
 
     training_data = {}
