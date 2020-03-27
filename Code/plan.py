@@ -172,6 +172,8 @@ if __name__ == '__main__':
 
     mean_images = {}
 
+    Theta = {}
+
     for color in bouy_colors:
         print(color)
         dataset = training_data[color]
@@ -188,6 +190,7 @@ if __name__ == '__main__':
             print(mu[k])
             print('alpha')
             print(alpha[k])
+
             r = mu[k][0]
             g = mu[k][1]
             b = mu[k][2]
@@ -199,13 +202,17 @@ if __name__ == '__main__':
 
         mean_images[color] = mu_colors
 
+        Theta[color] = [Sigma,mu,alpha]
+
     for color in bouy_colors:
         cv2.imshow(color+'mean colors',mean_images[color])
     
     cv2.waitKey(0)
 
-
     dataset = testing_data['yellow']
+    Sigma = Theta['yellow'][0]
+    Mu = Theta['yellow'][1]
+    alpha = Theta['yellow'][2]
     score = test_score(Sigma,mu,alpha,dataset)
     print('\n'+str(score))
 
