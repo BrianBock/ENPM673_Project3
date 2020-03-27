@@ -138,12 +138,14 @@ def generate_dataset(path,colorspace):
     dataset = []
     for img_name in os.listdir(path):
         if img_name.endswith('.png'):
+            # print('\n'+path+'/'+img_name)
             img = cv2.imread(path+'/'+img_name)
             if colorspace == 'BGR':
                 b = img[:,:,0].flatten()
                 g = img[:,:,1].flatten()
                 r = img[:,:,2].flatten()
                 data = np.stack((b, g, r))
+
             elif colorspace == 'HSV':
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
                 h = img[:,:,0].flatten()
@@ -154,10 +156,12 @@ def generate_dataset(path,colorspace):
             idx = np.argwhere(np.all(data[..., :] == 0, axis=0))
 
             nonzero = np.delete(data, idx, axis=1)
+
             if len(dataset) == 0:
-                dataset = np.append(dataset,nonzero)
-            else:
                 dataset = nonzero
+            else:
+                dataset = np.concatenate((dataset,nonzero),axis = 1)
+                
     return dataset
 
 
@@ -166,9 +170,9 @@ def generate_dataset(path,colorspace):
 if __name__ == '__main__':
 
     get_new_raw = False
-    sort = True
+    sort = False
     bouy_colors = ['yellow','orange','green']
-    colorspace = 'HSV' #HSV or BGR
+    colorspace = 'BGR' #HSV or BGR
 
     if get_new_raw:
         print('Running this program will ovewrite all previous data')
@@ -185,11 +189,14 @@ if __name__ == '__main__':
     training_data = {}
     testing_data = {}
     for color in bouy_colors:
+        print('\n'+color)
         train_path = 'Training Data/'+color
         test_path = 'Testing Data/'+color
 
         train_data= generate_dataset(train_path,colorspace)
+        print(train_data.shape)
         test_data= generate_dataset(test_path,colorspace)
+        print(test_data.shape)
 
         training_data[color] = train_data
         testing_data[color] = test_data

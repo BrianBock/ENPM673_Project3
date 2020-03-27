@@ -20,7 +20,7 @@ def GaussianNormal(Sigma, x, mu):
 
 
 
-def GaussianMixtureModel(K, dataset):
+def GaussianMixtureModel(K, dataset, thresh):
     N=len(dataset[0])
 
     # Compute starting values
@@ -60,11 +60,14 @@ def GaussianMixtureModel(K, dataset):
         mu_k=np.array([[mu_r], [mu_g], [mu_b]])
         mu.append(mu_k)
         
-    log_like = 0
     diff = 100
-    thresh = 1
+    iter_count = 0
     while diff>thresh:
-        prev = log_like
+        if iter_count == 0:
+            prev = 0
+        else:
+            prev = log_like
+        
         # Compute weights
         w_ik = np.zeros((N,K)) 
         for i in range (0,N):
@@ -118,51 +121,40 @@ def GaussianMixtureModel(K, dataset):
                 sum_term+=alpha[k]*p_k
             log_like += np.log(sum_term)
 
-        # print(log_like)
-
         diff = abs(log_like-prev)
+        iter_count += 1
 
         print(diff)
 
-# return mu, Sigma, alpha
-
-# N is the length of our dataset (number of pixels in every frame for that color bouy)
-# Compute starting values
-    # K random sigma_g, sigma_r, sigma_b (to get a positive definite Sigma) - 0-255
-
-    # Sigma_k = [[sig_r_k**2, sig_r_k*sig_g_k, sig_r_k*sig_b_k],
-              # [sig_r_k*sig_g_k, sig_g_k**2, sig_g_k*sig_b_k],
-              # [sig_r_k*sig_b_k, sig_g_k*sig_b, sig_b_k**2]]
-
-    # Sigma=[Sigma_1...Sigma_K]
-
-    # K random mu (0-255) 3xK array (one for each channel)
-
-    # K random alpha (sum of all alpha=1). Start->alpha_k=1/K
-    # alpha_1 = rand (0,1)
-    # alpha_2=rand(0,1-alpha_1)
-    # alpha_3=1-(alpha_2+alpha_1)
+    return Sigma, mu, alpha
 
 
-# Compute weights
+def test_score(Sigma,mu,alpha,dataset):
+    N = len(dataset[0])
 
-    # compute all weights using starting values (loop through all points and all K)
-    # probabilities determined via gaussian equation
-    # use equation from EM notes bottom of page1
+    count = 0
+    thresh = 90
+    for i in range(N):
+        prob_sum = 0
+        for k in range(K):
+            x_i = np.array([[dataset[2,i]],[dataset[1,i]],[dataset[0,i]]])
+            p = GaussianNormal(Sigma[k], x_i, mu[k])
+            prob_sum += p*alpha[k]
+        print(prob_sum)
+        if prob_sum >= thresh:
+            count += 1
 
-# Compute new values
-    # alpha_k_new=sum of weights / N
-    # mu_new_k = 1/N_k sum weights*xi
+    return (count/N *100)
 
-# Iteratively solve
-    # Check for convergence. exit when sufficiently converged
+
+
 
 
 
 if __name__ == '__main__':
 
     bouy_colors = ['yellow','orange','green']
-    colorspace = 'HSV' #HSV or BGR
+    colorspace = 'BGR' #HSV or BGR
     training_data = {}
     testing_data = {}
     for color in bouy_colors:
@@ -176,8 +168,46 @@ if __name__ == '__main__':
         testing_data[color] = test_data
 
     K=4
+    thresh = 2
 
-    dataset = training_data['yellow']
-    GaussianMixtureModel(K,dataset)
+    mean_images = {}
+
+    for color in bouy_colors:
+        print(color)
+        dataset = training_data[color]
+        Sigma, mu, alpha = GaussianMixtureModel(K,dataset,thresh)
+
+        mu_colors = np.zeros((500,500,3),np.uint8)
+
+        r_starts = [(0,0),(250,0),(0,250),(250,250)]
+        for k in range(K):
+            print('\n\nK = '+str(k+1))
+            print('Sigma')
+            print(Sigma[k])
+            print('mu')
+            print(mu[k])
+            print('alpha')
+            print(alpha[k])
+            r = mu[k][0]
+            g = mu[k][1]
+            b = mu[k][2]
+            x,y = r_starts[k]
+            start = (x,y)
+            end = (x+250,y+250)
+
+            cv2.rectangle(mu_colors,start,end,(int(b),int(g),int(r)),-1)
+
+        mean_images[color] = mu_colors
+
+    for color in bouy_colors:
+        cv2.imshow(color+'mean colors',mean_images[color])
+    
+    cv2.waitKey(0)
+
+
+    dataset = testing_data['yellow']
+    score = test_score(Sigma,mu,alpha,dataset)
+    print('\n'+str(score))
+
 
 
