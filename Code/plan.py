@@ -133,16 +133,23 @@ def test_score(Sigma,mu,alpha,dataset):
     N = len(dataset[0])
 
     count = 0
-    thresh = 90
+    thresh = 1*10**-6
     for i in range(N):
         prob_sum = 0
+        p=[]
         for k in range(K):
             x_i = np.array([[dataset[2,i]],[dataset[1,i]],[dataset[0,i]]])
-            p = GaussianNormal(Sigma[k], x_i, mu[k])
-            prob_sum += p*alpha[k]
+            p_k = GaussianNormal(Sigma[k], x_i, mu[k])
+            prob_sum += p_k*alpha[k]
+            p.append(p_k*alpha[k])
         print(prob_sum)
+        # for k in range(0,K):
+        #     prob=p_k/prob_sum
+        #     print(prob)
         if prob_sum >= thresh:
+            print("True")
             count += 1
+            # break
 
     return (count/N *100)
 
@@ -154,7 +161,8 @@ def test_score(Sigma,mu,alpha,dataset):
 if __name__ == '__main__':
 
     bouy_colors = ['yellow','orange','green']
-    colorspace = 'BGR' #HSV or BGR
+    # bouy_colors = ['orange']#,'orange','green']
+    colorspace = 'HSV' #HSV or BGR
     training_data = {}
     testing_data = {}
     for color in bouy_colors:
@@ -209,10 +217,10 @@ if __name__ == '__main__':
     
     cv2.waitKey(0)
 
-    dataset = testing_data['yellow']
-    Sigma = Theta['yellow'][0]
-    Mu = Theta['yellow'][1]
-    alpha = Theta['yellow'][2]
+    dataset = testing_data['orange']
+    Sigma = Theta['green'][0]
+    mu = Theta['green'][1]
+    alpha = Theta['green'][2]
     score = test_score(Sigma,mu,alpha,dataset)
     print('\n'+str(score))
 
