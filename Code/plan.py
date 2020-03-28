@@ -2,6 +2,7 @@
 import numpy as np
 import random
 import math
+import os
 from get_data import *
 
 
@@ -19,8 +20,19 @@ def GaussianNormal(Sigma, x, mu):
     return p
 
 
+def writeGMM(Sigma, mu, alpha, path):
+    if os.path.exists(path):
+        os.remove(path)
+    # Create the file
+    GMM_output=open(path,"a+")
 
-def GaussianMixtureModel(K, dataset, thresh):
+    # Write Sigma
+    np.savez(path,Sigma=Sigma,mu=mu,alpha=alpha)
+
+
+
+def GaussianMixtureModel(K, dataset, thresh, path):
+    path+="/GMMoutput.npz"
     N=len(dataset[0])
 
     # Compute starting values
@@ -126,6 +138,7 @@ def GaussianMixtureModel(K, dataset, thresh):
 
         print(diff)
 
+    writeGMM(Sigma, mu, alpha, path)
     return Sigma, mu, alpha
 
 
@@ -155,6 +168,27 @@ def test_score(Sigma,mu,alpha,dataset):
 
 
 
+def readGMM(path):
+    path+="/GMMoutput.npz"
+    if os.path.exists(path):
+        print("File exists")
+        GMM_file=open(path,"r")
+        
+        with np.load(path) as data:
+            Sigma = data['Sigma']
+            mu = data['mu']
+            alpha = data['alpha']
+
+        newGMM=False
+
+    else:
+        print("Cannot read '"+path+"'. Will compute new GMM values.")
+        newGMM = True
+        Sigma, mu, alpha = None, None, None
+
+    return newGMM, Sigma, mu, alpha
+
+
 
 
 
@@ -165,6 +199,15 @@ if __name__ == '__main__':
     colorspace = 'HSV' #HSV or BGR
     training_data = {}
     testing_data = {}
+
+    K=4
+    thresh = 2
+
+    mean_images = {}
+
+    Theta = {}
+
+
     for color in bouy_colors:
         train_path = 'Training Data/'+color
         test_path = 'Testing Data/'+color
@@ -175,17 +218,21 @@ if __name__ == '__main__':
         training_data[color] = train_data
         testing_data[color] = test_data
 
-    K=4
-    thresh = 2
 
-    mean_images = {}
+        newGMM=False
 
-    Theta = {}
+        if not newGMM:
+            # Check if the right files exist. If they don't, toggle newGMM=True
+            print("Checking if the GMM outputs exist. If they don't, I'll need to compute them.")
+            newGMM, Sigma, mu, alpha=readGMM(train_path)
 
-    for color in bouy_colors:
-        print(color)
-        dataset = training_data[color]
-        Sigma, mu, alpha = GaussianMixtureModel(K,dataset,thresh)
+        if newGMM:
+            print("Generating new GMM values...")
+            print(color)
+            dataset = training_data[color]
+            Sigma, mu, alpha = GaussianMixtureModel(K,dataset,thresh,train_path)
+
+        
 
         mu_colors = np.zeros((500,500,3),np.uint8)
 
@@ -213,7 +260,7 @@ if __name__ == '__main__':
         Theta[color] = [Sigma,mu,alpha]
 
     for color in bouy_colors:
-        cv2.imshow(color+'mean colors',mean_images[color])
+        cv2.imshow(color+'mean colors (Press any key to continue)',mean_images[color])
     
     cv2.waitKey(0)
 
