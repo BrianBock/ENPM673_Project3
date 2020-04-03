@@ -237,7 +237,8 @@ def readGMM(path):
 
 if __name__ == '__main__':
 
-    bouy_colors = ['yellow','orange','green']
+    # bouy_colors = ['yellow','orange','green']
+    bouy_colors = ['orange']
   
     colorspace = 'BGR' #HSV or BGR
     training_data = {}
@@ -267,16 +268,32 @@ if __name__ == '__main__':
         print('Shape of test_data data array for ' + color + ': ',end = '')
         print(test_data.shape[1])
 
-        if not newGMM:
-            # Check if the right files exist. If they don't, toggle newGMM=True
-            print("Checking if the GMM outputs exist. If they don't, I'll need to compute them.")
-            newGMM, Sigma, mu, alpha=readGMM(train_path)
 
-        if newGMM:
-            print("Generating new GMM values...")
-            print(color)
-            dataset = training_data[color]
-            Sigma, mu, alpha = GaussianMixtureModel(K,dataset,diff_thresh,train_path)
+        need_confirm=True
+        while need_confirm:
+            if not newGMM:
+                # Check if the right files exist. If they don't, toggle newGMM=True
+                print("Checking if the GMM outputs exist. If they don't, I'll need to compute them.")
+                newGMM, Sigma, mu, alpha=readGMM(train_path)
+
+            if newGMM:
+                confirm=input("This will overwrite any exisiting GMM values. Are you sure you want to continue? Press 'y' to confirm or 'n' to abort: ")
+                if confirm.lower() == 'y':
+                    need_confirm=False
+                    print("Generating new GMM values...")
+                    print(color)
+                    dataset = training_data[color]
+                    Sigma, mu, alpha = GaussianMixtureModel(K,dataset,diff_thresh,train_path)
+
+                if confirm.lower()=='n':
+                    print("No new GMM values will be computed. You'll need to change newGMM to False in gaussian_mixture_model.py before you run this program again. Exiting")
+                    need_confirm=False
+                    exit()
+                else:
+                    print("I don't understand what you tried to enter. Please try again.")
+
+
+
 
         # mu_colors = np.zeros((500,500,3),np.uint8)
 
