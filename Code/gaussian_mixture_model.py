@@ -286,7 +286,7 @@ if __name__ == '__main__':
                     Sigma, mu, alpha = GaussianMixtureModel(K,dataset,diff_thresh,train_path)
 
                 if confirm.lower()=='n':
-                    print("No new GMM values will be computed. You'll need to change newGMM to False in gaussian_mixture_model.py before you run this program again. Exiting")
+                    print("No new GMM values will be computed. Please note that 'newGMM' is still set to 'True' in gaussian_mixture_model.py. If you don't want any new GMM values computed, you'll need to toggle this to False before you run this program again. Exiting")
                     need_confirm=False
                     exit()
                 else:
