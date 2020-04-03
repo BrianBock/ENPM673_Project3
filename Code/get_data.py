@@ -170,7 +170,7 @@ def generate_dataset(path,colorspace):
 if __name__ == '__main__':
 
     get_new_raw = False
-    sort = False
+    sort = True
     bouy_colors = ['yellow','orange','green']
     colorspace = 'BGR' #HSV or BGR
 
