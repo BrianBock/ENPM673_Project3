@@ -102,7 +102,7 @@ def GaussianMixtureModel(K, dataset, thresh, path):
         p_sum = np.zeros(N)
         p_k = []
         for k in range(K):
-            p = multivariate_normal.pdf(np.transpose(dataset),mean=np.transpose(mu[k])[0],cov = Sigma[k])
+            p = multivariate_normal.pdf(np.transpose(dataset),mean=np.transpose(mu[k])[0],cov = Sigma[k],allow_singular=True)
             p_k.append(p)
             p_sum += p
 
@@ -154,7 +154,7 @@ def GaussianMixtureModel(K, dataset, thresh, path):
         
         log_like = 0
         for k in range(K):
-            log_like_k = sum(multivariate_normal.logpdf(np.transpose(dataset),mean=np.transpose(mu[k])[0],cov=Sigma[k]))
+            log_like_k = sum(multivariate_normal.logpdf(np.transpose(dataset),mean=np.transpose(mu[k])[0],cov=Sigma[k],allow_singular=True))
             log_like += log_like_k
 
 
@@ -278,14 +278,14 @@ if __name__ == '__main__':
 
             if newGMM:
                 confirm=input("This will overwrite any exisiting GMM values. Are you sure you want to continue? Press 'y' to confirm or 'n' to abort: ")
-                if confirm.lower() == 'y':
+                if confirm.lower() == 'y' or confirm.lower() == 'yes':
                     need_confirm=False
                     print("Generating new GMM values...")
                     print(color)
                     dataset = training_data[color]
                     Sigma, mu, alpha = GaussianMixtureModel(K,dataset,diff_thresh,train_path)
 
-                if confirm.lower()=='n':
+                if confirm.lower()=='n' or confirm.lower() == 'no':
                     print("No new GMM values will be computed. Please note that 'newGMM' is still set to 'True' in gaussian_mixture_model.py. If you don't want any new GMM values computed, you'll need to toggle this to False before you run this program again. Exiting")
                     need_confirm=False
                     exit()
