@@ -4,6 +4,7 @@ from scipy.stats import multivariate_normal
 import random
 import math
 import os
+from datetime import datetime
 from get_data import *
 
 
@@ -32,10 +33,10 @@ def writeGMM(Sigma, mu, alpha, path):
 
 
 
-def GaussianMixtureModel(K, dataset, thresh, path):
+def GaussianMixtureModel(K, dataset, thresh, path,f):
     path+="/GMMoutput.npz"
     N= dataset.shape[1]
-
+    start_time=datetime.now()
     # Compute starting values
     Sigma=[]
     alpha=[]
@@ -162,6 +163,9 @@ def GaussianMixtureModel(K, dataset, thresh, path):
         iter_count += 1
 
         print(diff)
+        end_time=datetime.now()
+        f.write(str(diff)+","+str(end_time)+"\n")
+
 
     writeGMM(Sigma, mu, alpha, path)
     
@@ -237,8 +241,10 @@ def readGMM(path):
 
 if __name__ == '__main__':
 
+    f=open("diff_times.txt","a+")
+
     # bouy_colors = ['yellow','orange','green']
-    bouy_colors = ['orange']
+    bouy_colors = ['green']
   
     colorspace = 'BGR' #HSV or BGR
     training_data = {}
@@ -283,7 +289,10 @@ if __name__ == '__main__':
                     print("Generating new GMM values...")
                     print(color)
                     dataset = training_data[color]
-                    Sigma, mu, alpha = GaussianMixtureModel(K,dataset,diff_thresh,train_path)
+                    start_time=datetime.now()
+                    Sigma, mu, alpha = GaussianMixtureModel(K,dataset,diff_thresh,train_path,f)
+                    end_time=datetime.now()
+                    print("Finished in "+str(end_time-start_time)+" (hours:min:sec)")
 
                 if confirm.lower()=='n' or confirm.lower() == 'no':
                     print("No new GMM values will be computed. Please note that 'newGMM' is still set to 'True' in gaussian_mixture_model.py. If you don't want any new GMM values computed, you'll need to toggle this to False before you run this program again. Exiting")
