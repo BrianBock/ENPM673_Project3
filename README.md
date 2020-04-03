@@ -15,4 +15,8 @@ Download the entire directory. All files are required.
 
 ## Data Selection
 
-![Bouy Selection](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/bouy_select.gif)
+Click on this gif to see an extended video of the bouy selection process. 
+[![Bouy Selection]({https://github.com/BrianBock/ENPM673_Project3/blob/master/images/bouy_select.gif})]({https://youtu.be/gAHzZghxUaw} "Bouy Selection")
+
+
+
