@@ -241,10 +241,9 @@ def readGMM(path):
 
 if __name__ == '__main__':
 
-    f=open("diff_times.txt","a+")
-
+    
     # bouy_colors = ['yellow','orange','green']
-    bouy_colors = ['green']
+    bouy_colors = ['orange']
   
     colorspace = 'BGR' #HSV or BGR
     training_data = {}
@@ -260,6 +259,7 @@ if __name__ == '__main__':
 
     # Smaller Sample/
     for color in bouy_colors:
+        f=open(str(color)+"diff_times.txt","a+")
         train_path = 'Training Data/'+color
         test_path = 'Testing Data/'+color
 
