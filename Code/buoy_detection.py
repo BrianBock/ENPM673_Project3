@@ -18,6 +18,8 @@ def readGMM(color):
     return Sigma, mu, pi
 
 
+
+            
 buoy_colors = ['orange','green','yellow']
 
 Theta = {}
@@ -25,15 +27,20 @@ for color in buoy_colors:
     Sigma, mu, pi = readGMM(color)
     Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
 
+# print(Theta)
 filename = '../media/detectbuoy.avi'
-video = cv2.VideoCapture(filename)
+input_video = cv2.VideoCapture(filename)
 
-video.set(1,20)
+input_video.set(1,20)
 
-for num in range(1):
-    ret, frame = video.read()
+
+for num in range(25):
+    print("Frame "+str(num))
+    ret, frame = input_video.read()
 
     h,w = frame.shape[:2]
+
+    new_frame=np.zeros([h,w,3],np.uint8)
 
     g = frame[:,:,1].flatten()
     r = frame[:,:,2].flatten()
@@ -47,6 +54,7 @@ for num in range(1):
 
     probs = {}
     for color in buoy_colors:
+        # print(color)
         Sigma = Theta[color]['Sigma']
         mu = Theta[color]['mu']
         pi = Theta[color]['pi']
@@ -77,14 +85,31 @@ for num in range(1):
         #     frame[row,column] = (132,241,238)
 
         if max_ind == 0 and pixel_p[max_ind] > 1*10**-4:
-            frame[row,column] = (14,127,255)
+            new_frame[row,column] = (14,127,255)
         elif max_ind == 1 and pixel_p[max_ind] > 2*10**-4:
-            frame[row,column] = (96,215,30)
+            new_frame[row,column] = (96,215,30)
         elif max_ind == 2 and pixel_p[max_ind] > 1*10**-4:
-            frame[row,column] = (77,245,255)
+            new_frame[row,column] = (77,245,255)
 
-    cv2.imshow('Frame',frame)
-    cv2.waitKey(0)
+        # print(max_ind)
+    combined_frame = np.concatenate((frame, new_frame), axis=1)
+    if num==0:
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        output_video = 'output.mp4'
+        fps_out = 10
 
+        if os.path.exists(output_video):
+            os.remove(output_video)
+        out_vid = cv2.VideoWriter(output_video, fourcc, fps_out, (combined_frame.shape[1],combined_frame.shape[0]))
+    # cv2.imshow('Frame',numpy_horizontal_concat)
+    # cv2.waitKey(0)
+    # # if the user presses 'q' release the video which will exit the loop
+    # if cv2.waitKey(1) == ord('q'):
+    #     video.release()
 
+    # print('Writing to video. Please Wait.')
+    # cv2.imshow("Frame",combined_frame)
+    # cv2.waitKey(0)
+    out_vid.write(combined_frame)
+out_vid.release()
 
