@@ -3,8 +3,8 @@ import math
 from matplotlib.patches import Ellipse
 from get_data import *
 
-def writeGMM(Sigma, mu, pi):
-    path = "EMoutput.npz"
+def writeGMM(Sigma, mu, pi,color):
+    path = 'EMoutput' + color + '.npz'
     if os.path.exists(path):
         os.remove(path)
     # Create the file
@@ -14,8 +14,8 @@ def writeGMM(Sigma, mu, pi):
     np.savez(path,Sigma=Sigma,mu=mu,pi=pi)
 
 
-def readGMM():
-    path = "EMoutput.npz"
+def readGMM(color):
+    path = 'EMoutput' + color + '.npz'
     if os.path.exists(path):
         print("File exists")
         GMM_file=open(path,"r")
@@ -34,40 +34,38 @@ def readGMM():
     return Sigma, mu, pi
 
 
-def initialize_data(buoy_colors,clusters_per_buoy):
+def initialize_data(color,K):
     x = []
     mu = []
     Sigma = []
     pi = []
-    K = len(buoy_colors)*clusters_per_buoy
 
     # Configure data set and initialze starting values
-    for color in buoy_colors: 
-        path = 'Smaller Sample/Training Data/' + color
-        data = generate_dataset(path,colorspace)
-        g = data[1,:]
-        r = data[2,:]
+    path = 'Training Data/' + color
+    data = generate_dataset(path,colorspace)
+    g = data[1,:]
+    r = data[2,:]
 
-        # Generate full dataset as python list of numpy arrays of green and red channel for each data_point
-        for g_ch,r_ch in zip(g,r):
-            x_i = np.array([g_ch,r_ch])
-            x.append(x_i)
+    # Generate full dataset as python list of numpy arrays of green and red channel for each data_point
+    for g_ch,r_ch in zip(g,r):
+        x_i = np.array([g_ch,r_ch])
+        x.append(x_i)
 
-        split = len(g)//clusters_per_buoy
-        for i in range(clusters_per_buoy):
-            # Initialize mu_k with appropriate number of clusters per buoy
-            start = i*split
-            end = (i+1)*split
-            if i == clusters_per_buoy-1:
-                mu.append(np.array([np.mean(g[start:]),np.mean(r[start:])]))
-            else:
-                mu.append(np.array([np.mean(g[start:end]),np.mean(r[start:end])]))
-            
-            # Initialize Sigma_k as identity matrix
-            Sigma.append(np.identity(2)*50)
+    split = len(x)//K
+    for i in range(K):
+        # Initialize mu_k with appropriate number of clusters per buoy
+        start = i*split
+        end = (i+1)*split
+        if i == K-1:
+            mu.append(np.array([np.mean(g[start:]),np.mean(r[start:])]))
+        else:
+            mu.append(np.array([np.mean(g[start:end]),np.mean(r[start:end])]))
+        
+        # Initialize Sigma_k as identity matrix
+        Sigma.append(np.identity(2)*100)
 
-            # Initialize mixture weights as 1/K
-            pi.append(1/K)
+        # Initialize mixture weights as 1/K
+        pi.append(1/K)
 
     x = np.asarray(x)
 
@@ -126,9 +124,48 @@ def EM(x,mu,Sigma,pi,K):
 
         count += 1
 
-        writeGMM(Sigma, mu, pi)
+    return Sigma,mu,pi
 
-    return mu,Sigma,pi
+
+def classify_points(Theta,buoy_colors,K):
+    # Configure data set
+    x = []
+    for color in buoy_colors:
+        path = 'Smaller Sample/Testing Data/' + color
+        data = generate_dataset(path,colorspace)
+        g = data[1,:]
+        r = data[2,:]
+        for g_ch,r_ch in zip(g,r):
+            x_i = np.array([g_ch,r_ch])
+            x.append(x_i)
+    x = np.asarray(x)
+
+    probs = {}
+    classified = {}
+    for color in buoy_colors:
+        Sigma = Theta[color]['Sigma']
+        mu = Theta[color]['mu']
+        pi = Theta[color]['pi']
+        
+        p = np.zeros((1,len(x)))
+        for k in range(K):
+            p += multivariate_normal.pdf(x,mean=mu[k],cov = Sigma[k])*pi[k]
+
+        probs[color] = p.T
+
+        classified[color] = []
+
+
+    for i in range(len(x)):
+        pixel_p = []
+        for color in buoy_colors:
+            pixel_p.append(probs[color][i])
+        max_ind = pixel_p.index(max(pixel_p))
+
+        classified[buoy_colors[max_ind]].append(x[i])
+
+
+    return classified
 
 
 def plots(colorspace,bouy_colors):
@@ -178,45 +215,67 @@ def plots(colorspace,bouy_colors):
 
 
 
-
-
 if __name__ == '__main__':
     colorspace = 'BGR' #HSV or BGR
 
     buoy_colors = ['orange','green','yellow']
-    clusters_per_buoy = 5
-    K = len(buoy_colors)*clusters_per_buoy
+    # buoy_colors = ['yellow']
+    K = 3
 
     newEM = False
 
+    Theta = {}
     if newEM:
-        x,init_mu,init_Sigma,init_pi = initialize_data(buoy_colors,clusters_per_buoy)
-        mu,Sigma,pi = EM(x,init_mu,init_Sigma,init_pi,K)
+        for color in buoy_colors:
+            x,init_mu,init_Sigma,init_pi = initialize_data(color,K)
+            Sigma, mu, pi = EM(x,init_mu,init_Sigma,init_pi,K)
+            writeGMM(Sigma, mu, pi, color)
+            Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
 
     else:
-        Sigma, mu, pi = readGMM()
+        for color in buoy_colors:
+            Sigma, mu, pi = readGMM(color)
+            Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
+
+    classified = classify_points(Theta,buoy_colors,K)
+
+    fig, ax = plt.subplots()
+
+    for color in buoy_colors:
+        points = classified[color]
+        x = []
+        y = []
+        for point in points: 
+            x.append(point[0])
+            y.append(point[1])
+        ax.scatter(x,y,edgecolors = color,facecolors='none',linewidths=4)   
 
     patches = []
-    fig, ax = plt.subplots()
-    for k in range(K):
-        center = (mu[k][0],mu[k][1])
-        w,v = np.linalg.eig(Sigma[k])
-        width = 2*math.sqrt(5.991*w[0])
-        height = 2*math.sqrt(5.991*w[1])
-        angle = np.rad2deg(math.atan2(max(v[0]),max(v[1])))
+    
+    for color in buoy_colors:
+        Sigma = Theta[color]['Sigma']
+        mu = Theta[color]['mu']
+        pi = Theta[color]['pi']
+        for k in range(K):
+            center = (mu[k][0],mu[k][1])
+            w,v = np.linalg.eig(Sigma[k])
+            width = 2*math.sqrt(5.991*w[0])
+            height = 2*math.sqrt(5.991*w[1])
+            angle = np.rad2deg(math.atan2(max(v[0]),max(v[1])))
 
-        ellipse = Ellipse(center, width, height,angle=angle,color=buoy_colors[k%3],alpha = .4)
-        ax.add_patch(ellipse)
+            ellipse = Ellipse(center, width, height,angle=angle,color=color,alpha=pi[k])
+            ax.add_patch(ellipse)
 
-    for color in buoy_colors: 
-        path = 'Smaller Sample/Training Data/' + color
+        path = 'Smaller Sample/Testing Data/' + color
         data = generate_dataset(path,colorspace)
         g = data[1,:]
         r = data[2,:]
-        ax.scatter(g,r,edgecolors = color,facecolors='none')
+        ax.scatter(g,r,edgecolors = 'none',facecolors=color,linewidths=4)
 
     plt.xlim((0,255))
+    plt.xlabel('Intensity (G Channel)')
     plt.ylim((0,255))
+    plt.ylabel('Intensity (R Channel)')
     plt.show()
 
 
