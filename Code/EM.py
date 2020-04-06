@@ -184,7 +184,7 @@ if __name__ == '__main__':
     colorspace = 'BGR' #HSV or BGR
 
     buoy_colors = ['orange','green','yellow']
-    clusters_per_buoy = 2
+    clusters_per_buoy = 5
     K = len(buoy_colors)*clusters_per_buoy
 
     newEM = False
@@ -203,13 +203,20 @@ if __name__ == '__main__':
         w,v = np.linalg.eig(Sigma[k])
         width = 2*math.sqrt(5.991*w[0])
         height = 2*math.sqrt(5.991*w[1])
-        angle = np.deg2rad(math.atan2(max(v[0]),max(v[1])))
+        angle = np.rad2deg(math.atan2(max(v[0]),max(v[1])))
 
-        ellipse = Ellipse(center, width, height,angle=angle,color=buoy_colors[k%3])
+        ellipse = Ellipse(center, width, height,angle=angle,color=buoy_colors[k%3],alpha = .4)
         ax.add_patch(ellipse)
 
-    plt.axis('equal')
+    for color in buoy_colors: 
+        path = 'Smaller Sample/Training Data/' + color
+        data = generate_dataset(path,colorspace)
+        g = data[1,:]
+        r = data[2,:]
+        ax.scatter(g,r,edgecolors = color,facecolors='none')
 
+    plt.xlim((0,255))
+    plt.ylim((0,255))
     plt.show()
 
 
