@@ -1,4 +1,5 @@
 from scipy.stats import multivariate_normal
+from scipy.stats import norm
 import math
 from matplotlib.patches import Ellipse
 from get_data import *
@@ -41,7 +42,7 @@ def initialize_data(color,K,channels):
     pi = []
 
     # Configure data set and initialze starting values
-    path = 'Smaller Sample/Training Data/' + color
+    path = 'Training Data/' + color
     data = generate_dataset(path,colorspace)
     ch1 = data[channels[0],:]
     ch2 = data[channels[1],:]
@@ -176,12 +177,11 @@ def determineThesholds(Theta,buoy_colors,K,dec_percentage,channels):
     thresh={}
     for color in buoy_colors:
         x = []
-        path = 'Smaller Sample/Testing Data/' + color
+        path = 'Testing Data/' + color
         data = generate_dataset(path,'BGR')
         ch1 = data[channels[color][0],:]
         ch2 = data[channels[color][1],:]
     
-    # Generate full dataset as python list of numpy arrays of green and red channel for each data_point
         for ch_x,ch_y in zip(ch1,ch2):
             x_i = np.array([ch_x,ch_y])
             x.append(x_i)
@@ -265,10 +265,10 @@ if __name__ == '__main__':
 
     buoy_colors = ['orange','green','yellow']
     training_channels={'orange':(1,2),'green':(0,1),'yellow':(1,2)}
-    # buoy_colors = ['yellow']
+
     K = 3
 
-    newEM = False
+    newEM = True
 
     Theta = {}
     if newEM:
@@ -284,12 +284,6 @@ if __name__ == '__main__':
             Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
 
     # classified = classify_points(Theta,buoy_colors,K)
-
-
-
-
-
-
 
     # fig, ax = plt.subplots()
 

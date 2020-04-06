@@ -1,64 +1,59 @@
 from EM import *
-
-def readGMM(color):
-    path = 'EMoutput' + color + '.npz'
-    if os.path.exists(path):
-        print("File exists")
-        GMM_file=open(path,"r")
-        
-        with np.load(path) as data:
-            Sigma = data['Sigma']
-            mu = data['mu']
-            pi = data['pi']
-
-    else:
-        print("Cannot read '"+path+"' ")
-        exit()
-
-    return Sigma, mu, pi
-
-
-
             
 buoy_colors = ['orange','green','yellow']
+training_channels = {'orange':(1,2),'green':(0,1),'yellow':(1,2)}
 
 Theta = {}
 for color in buoy_colors:
     Sigma, mu, pi = readGMM(color)
     Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
 
-# print(Theta)
+train_percent = .6
+K = 3
+threshs = determineThesholds(Theta,buoy_colors,K,train_percent,training_channels)
+
+print(threshs)
+
 filename = '../media/detectbuoy.avi'
 input_video = cv2.VideoCapture(filename)
 
-input_video.set(1,20)
+start_frame = 20
+input_video.set(1,start_frame)
 
+print('Writing to video. Please Wait.')
+count = 0
 
-for num in range(25):
-    print("Frame "+str(num))
+while input_video.isOpened():
+    print("Frame "+str(count+start_frame))
+    
     ret, frame = input_video.read()
+
+    if not ret:
+        break
 
     h,w = frame.shape[:2]
 
-    new_frame=np.zeros([h,w,3],np.uint8)
-
-    g = frame[:,:,1].flatten()
-    r = frame[:,:,2].flatten()
-
-    x = []
-    for g_ch,r_ch in zip(g,r):
-        x_i = np.array([g_ch,r_ch])
-        x.append(x_i)
-    
-    x = np.asarray(x)
+    segmented_frames = {}
+    for color in buoy_colors:
+        segmented_frames[color] = np.zeros([h,w,3],np.uint8)
 
     probs = {}
+
     for color in buoy_colors:
-        # print(color)
         Sigma = Theta[color]['Sigma']
         mu = Theta[color]['mu']
         pi = Theta[color]['pi']
         
+        ch1 = frame[:,:,training_channels[color][0]].flatten()
+        ch2 = frame[:,:,training_channels[color][1]].flatten()
+
+        x = []
+        for ch_x,ch_y in zip(ch1,ch2):
+            x_i = np.array([ch_x,ch_y])
+            x.append(x_i)
+    
+        x = np.asarray(x)
+
         K = len(mu)
         p = np.zeros((1,len(x)))
         for k in range(K):
@@ -68,48 +63,46 @@ for num in range(25):
 
     for i in range(len(x)):
         pixel_p = []
+        
         for color in buoy_colors:
             pixel_p.append(probs[color][i])
         
-        # if any(val > 1*10**-4 for val in pixel_p):
         max_ind = pixel_p.index(max(pixel_p))
 
         row = i//w
         column = i%w
 
-        # if max_ind == 0:
-        #     frame[row,column] = (14,127,255)
-        # elif max_ind == 1:
-        #     frame[row,column] = (118,183,56)
-        # elif max_ind == 2:
-        #     frame[row,column] = (132,241,238)
+        if max_ind == 0 and pixel_p[max_ind] > threshs['orange']:
+            segmented_frames['orange'][row,column] = (14,127,255)
+        elif max_ind == 1 and pixel_p[max_ind] > threshs['green']:
+            segmented_frames['green'][row,column] = (96,215,30)
+        elif max_ind == 2 and pixel_p[max_ind] > threshs['yellow']:
+            segmented_frames['yellow'][row,column] = (77,245,255)
 
-        if max_ind == 0 and pixel_p[max_ind] > 1*10**-4:
-            new_frame[row,column] = (14,127,255)
-        elif max_ind == 1 and pixel_p[max_ind] > 2*10**-4:
-            new_frame[row,column] = (96,215,30)
-        elif max_ind == 2 and pixel_p[max_ind] > 1*10**-4:
-            new_frame[row,column] = (77,245,255)
+    all_colors = np.zeros([h,w,3],np.uint8)
 
-        # print(max_ind)
-    combined_frame = np.concatenate((frame, new_frame), axis=1)
-    if num==0:
+    for color in buoy_colors:
+        all_colors = cv2.bitwise_or(all_colors,segmented_frames[color])
+
+    combined_frame = np.concatenate((frame, all_colors), axis=1)
+    if count == 0:
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         output_video = 'output.mp4'
-        fps_out = 10
+        fps_out = 5
 
         if os.path.exists(output_video):
             os.remove(output_video)
         out_vid = cv2.VideoWriter(output_video, fourcc, fps_out, (combined_frame.shape[1],combined_frame.shape[0]))
-    # cv2.imshow('Frame',numpy_horizontal_concat)
-    # cv2.waitKey(0)
-    # # if the user presses 'q' release the video which will exit the loop
-    # if cv2.waitKey(1) == ord('q'):
-    #     video.release()
 
-    # print('Writing to video. Please Wait.')
-    # cv2.imshow("Frame",combined_frame)
-    # cv2.waitKey(0)
+    cv2.imshow("Frame",combined_frame)
+    # if the user presses 'q' release the video which will exit the loop
+    if cv2.waitKey(1) == ord('q'):
+        input_video.release()
+ 
     out_vid.write(combined_frame)
+
+    count += 1
+
+
 out_vid.release()
 
