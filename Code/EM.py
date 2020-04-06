@@ -34,21 +34,22 @@ def readGMM(color):
     return Sigma, mu, pi
 
 
-def initialize_data(color,K):
+def initialize_data(color,K,channels):
     x = []
     mu = []
     Sigma = []
     pi = []
 
     # Configure data set and initialze starting values
-    path = 'Training Data/' + color
+    path = 'Smaller Sample/Training Data/' + color
     data = generate_dataset(path,colorspace)
-    g = data[1,:]
-    r = data[2,:]
+    ch1 = data[channels[0],:]
+    ch2 = data[channels[1],:]
+    # ch3 = data[2,:]
 
     # Generate full dataset as python list of numpy arrays of green and red channel for each data_point
-    for g_ch,r_ch in zip(g,r):
-        x_i = np.array([g_ch,r_ch])
+    for ch_x,ch_y in zip(ch1,ch2):
+        x_i = np.array([ch_x,ch_y])
         x.append(x_i)
 
     split = len(x)//K
@@ -57,9 +58,9 @@ def initialize_data(color,K):
         start = i*split
         end = (i+1)*split
         if i == K-1:
-            mu.append(np.array([np.mean(g[start:]),np.mean(r[start:])]))
+            mu.append(np.array([np.mean(ch1[start:]),np.mean(ch2[start:])]))
         else:
-            mu.append(np.array([np.mean(g[start:end]),np.mean(r[start:end])]))
+            mu.append(np.array([np.mean(ch1[start:end]),np.mean(ch2[start:end])]))
         
         # Initialize Sigma_k as identity matrix
         Sigma.append(np.identity(2)*100)
@@ -131,7 +132,7 @@ def classify_points(Theta,buoy_colors,K):
     # Configure data set
     x = []
     for color in buoy_colors:
-        path = 'Smaller Sample/Testing Data/' + color
+        path = 'Training Data/' + color
         data = generate_dataset(path,colorspace)
         g = data[1,:]
         r = data[2,:]
@@ -166,6 +167,50 @@ def classify_points(Theta,buoy_colors,K):
 
 
     return classified
+
+
+
+def determineThesholds(Theta,buoy_colors,K,dec_percentage,channels):
+ # Configure data set
+    
+    thresh={}
+    for color in buoy_colors:
+        x = []
+        path = 'Smaller Sample/Testing Data/' + color
+        data = generate_dataset(path,'BGR')
+        ch1 = data[channels[color][0],:]
+        ch2 = data[channels[color][1],:]
+    
+    # Generate full dataset as python list of numpy arrays of green and red channel for each data_point
+        for ch_x,ch_y in zip(ch1,ch2):
+            x_i = np.array([ch_x,ch_y])
+            x.append(x_i)
+
+        x = np.asarray(x)
+
+        probs = {}
+        classified = {}
+
+        Sigma = Theta[color]['Sigma']
+        mu = Theta[color]['mu']
+        pi = Theta[color]['pi']
+        
+        p = np.zeros((1,len(x)))
+        for k in range(K):
+            p += multivariate_normal.pdf(x,mean=mu[k],cov = Sigma[k])*pi[k]
+
+        p=np.ndarray.tolist(p)
+        p=p[0]
+        p.sort(reverse=True)
+        # print(p)
+        thresh_ind=int(dec_percentage*len(p))
+
+        thresh[color]=p[thresh_ind]
+
+    return thresh
+
+
+
 
 
 def plots(colorspace,bouy_colors):
@@ -219,6 +264,7 @@ if __name__ == '__main__':
     colorspace = 'BGR' #HSV or BGR
 
     buoy_colors = ['orange','green','yellow']
+    training_channels={'orange':(1,2),'green':(0,1),'yellow':(1,2)}
     # buoy_colors = ['yellow']
     K = 3
 
@@ -227,7 +273,7 @@ if __name__ == '__main__':
     Theta = {}
     if newEM:
         for color in buoy_colors:
-            x,init_mu,init_Sigma,init_pi = initialize_data(color,K)
+            x,init_mu,init_Sigma,init_pi = initialize_data(color,K,training_channels[color])
             Sigma, mu, pi = EM(x,init_mu,init_Sigma,init_pi,K)
             writeGMM(Sigma, mu, pi, color)
             Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
@@ -237,45 +283,51 @@ if __name__ == '__main__':
             Sigma, mu, pi = readGMM(color)
             Theta[color] = {'Sigma':Sigma,'mu':mu,'pi':pi}
 
-    classified = classify_points(Theta,buoy_colors,K)
+    # classified = classify_points(Theta,buoy_colors,K)
 
-    fig, ax = plt.subplots()
 
-    for color in buoy_colors:
-        points = classified[color]
-        x = []
-        y = []
-        for point in points: 
-            x.append(point[0])
-            y.append(point[1])
-        ax.scatter(x,y,edgecolors = color,facecolors='none',linewidths=4)   
 
-    patches = []
+
+
+
+
+    # fig, ax = plt.subplots()
+
+    # for color in buoy_colors:
+    #     points = classified[color]
+    #     x = []
+    #     y = []
+    #     for point in points: 
+    #         x.append(point[0])
+    #         y.append(point[1])
+    #     ax.scatter(x,y,edgecolors = color,facecolors='none',linewidths=4)   
+
+    # patches = []
     
-    for color in buoy_colors:
-        Sigma = Theta[color]['Sigma']
-        mu = Theta[color]['mu']
-        pi = Theta[color]['pi']
-        for k in range(K):
-            center = (mu[k][0],mu[k][1])
-            w,v = np.linalg.eig(Sigma[k])
-            width = 2*math.sqrt(5.991*w[0])
-            height = 2*math.sqrt(5.991*w[1])
-            angle = np.rad2deg(math.atan2(max(v[0]),max(v[1])))
+    # for color in buoy_colors:
+    #     Sigma = Theta[color]['Sigma']
+    #     mu = Theta[color]['mu']
+    #     pi = Theta[color]['pi']
+    #     for k in range(K):
+    #         center = (mu[k][0],mu[k][1])
+    #         w,v = np.linalg.eig(Sigma[k])
+    #         width = 2*math.sqrt(5.991*w[0])
+    #         height = 2*math.sqrt(5.991*w[1])
+    #         angle = np.rad2deg(math.atan2(max(v[0]),max(v[1])))
 
-            ellipse = Ellipse(center, width, height,angle=angle,color=color,alpha=pi[k])
-            ax.add_patch(ellipse)
+    #         ellipse = Ellipse(center, width, height,angle=angle,color=color,alpha=pi[k])
+    #         ax.add_patch(ellipse)
 
-        path = 'Smaller Sample/Testing Data/' + color
-        data = generate_dataset(path,colorspace)
-        g = data[1,:]
-        r = data[2,:]
-        ax.scatter(g,r,edgecolors = 'none',facecolors=color,linewidths=4)
+    #     path = 'Smaller Sample/Testing Data/' + color
+    #     data = generate_dataset(path,colorspace)
+    #     g = data[1,:]
+    #     r = data[2,:]
+    #     ax.scatter(g,r,edgecolors = 'none',facecolors=color,linewidths=4)
 
-    plt.xlim((0,255))
-    plt.xlabel('Intensity (G Channel)')
-    plt.ylim((0,255))
-    plt.ylabel('Intensity (R Channel)')
-    plt.show()
+    # plt.xlim((0,255))
+    # plt.xlabel('Intensity (G Channel)')
+    # plt.ylim((0,255))
+    # plt.ylabel('Intensity (R Channel)')
+    # plt.show()
 
 
