@@ -68,9 +68,44 @@ Recognizing that our data might be more distinct in other color spaces, we built
 ## Gaussian Mixture Modeling
 
 
+
+## Buoy Detection
+
+### Color Segmentation
+
+![Colored pixels based on Gaussians](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/all_colors.png)
+### Contour Detection
+Take our new image and create a binary image where any previously colored (non black) pixel becomes white:
+
+![Binary Image](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/bin.png)
+
+
+To reduce noise, we apply a small Gaussian blur on this image and then run `cv2.findContours`, which returns us all of the contours in the image:
+
+![Rough Contours](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/rough_contours.png)
+
+Many of these contours are tiny and erroneous, so we sort our contours and only keep the largest 8:
+
+![8 Contours](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/8_contours.png)
+ 
+We use `cv2.minEnclosingCircle` to find the center and radius of the minimum enclosing circle for each contour. We know that our buoys are mostly circular, and so the area enclosed by the contour around a buoy should be comparable to the area defined by that minimum enclosing circle. Any contour whose area differs from it's min enclosing circle area by less than an experimentally defined threshold is likely a buoy. We then identify the color contained within that circle, and use it to define the color of the circular contour we draw:
+
+![Buoys Traced with Colored Circles](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/ring_contours.png)
+
+You have the option to output the data with the rough drawn Gaussian determined pixel colors. For cleaner output, you can toggle `solid=True` in the top of `buoy\_detection.py`, which will render solid circles on a black canvas:
+
+![Buoys Replaced with Solid Circles](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/contours.png)
+
+
+You can view both of these output versions in the Videos section. The new frame is exported side by side with the original video for side by side viewing:
+
+![Final Frame](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/finalframe.png)
+
+
+
 # Final Output
 ![Color Rings](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/color_rings.gif)
-![Solid Circles](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/solid_bouys.gif)
+![Solid Circles](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/solid_buoys.gif)
 
 Buoys with Colored Rings:https://youtu.be/UGUHVrVdI2U
 
