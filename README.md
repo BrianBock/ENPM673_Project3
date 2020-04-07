@@ -69,9 +69,16 @@ Recognizing that our data might be more distinct in other color spaces, we built
 
 
 
+
+
 ## Buoy Detection
 
 ### Color Segmentation
+We use our pre-trained data and run our Test images through it. 
+Our `determineThresholds` function runs our Test images through our Trained Gaussians, and produces the probability that each pixel belongs to those Gaussians. The probabilities are summed over each of our $K$ Gaussians. Using an experimentally determined threshold, we take a certain percentage of those probabilities and define them as the our certainty for each buoy color. 
+
+We return to looking at the entire original video, one frame at a time. We convert the frame into a flat 2 channel array, to make it easier to work with. We then create a new black image with the same dimensions as the original frame, which will be the canvas on which we draw new pixel. If any pixel in the original frame meets our buoy color thresh criteria, that pixel coordinate in the black image is colored to match the buoy's color. The first few frames of the video are very noisy with the pool sidewall closely matching several buoy colors. 
+
 
 ![Colored pixels based on Gaussians](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/all_colors.png)
 ### Contour Detection
