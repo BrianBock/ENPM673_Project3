@@ -2,10 +2,13 @@ from EM import *
 import imutils
 
 def addContours(image,segmented_frames,buoy_colors):
+    solid=False
+    
     blank_image=np.zeros((image.shape[0],image.shape[1],3),np.uint8)
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     ret, bin_image = cv2.threshold(grey, 1, 255, cv2.THRESH_BINARY) 
     # cv2.imshow("bin",bin_image)
+    # cv2.imwrite("bin.png",bin_image)
     # cv2.waitKey(0)
 
     blurred_image=cv2.GaussianBlur(bin_image,(5,5),0)
@@ -19,6 +22,7 @@ def addContours(image,segmented_frames,buoy_colors):
         cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:8]
         # contour_image=cv2.drawContours(image, cnts, -1, (0,0,255), 2)
         # cv2.imshow("bin",contour_image)
+        # cv2.imwrite("contours.png",contour_image)
         # cv2.waitKey(0)
         # exit()
 
@@ -27,7 +31,7 @@ def addContours(image,segmented_frames,buoy_colors):
        # Color (B,G,R)
         # color = (255, 255, 255) 
         # Line thickness of -1 = filled in 
-        thickness = -1
+        
         for contour in cnts:
 
 
@@ -64,8 +68,12 @@ def addContours(image,segmented_frames,buoy_colors):
 
                 ring_color=bgr_colors[buoy_colors[max_ind]]
 
-                image = cv2.circle(blank_image, (int(x),int(y)), int(radius), ring_color, thickness)
-
+                if solid:
+                    thickness = -1
+                    image = cv2.circle(blank_image, (int(x),int(y)), int(radius), ring_color, thickness)
+                else:
+                    thickness=2
+                    image = cv2.circle(image, (int(x),int(y)), int(radius), ring_color, thickness)
     return image
 
 
@@ -159,8 +167,11 @@ while input_video.isOpened():
     for color in buoy_colors:
         all_colors = cv2.bitwise_or(all_colors,segmented_frames[color])
 
+    # cv2.imwrite("all_colors.png",all_colors)
     contour_frame=addContours(all_colors,segmented_frames,buoy_colors)
+    # cv2.imwrite("contours.png",contour_frame)
     # cv2.imshow("Image",all_colors)
+
     # cv2.waitKey(0)
 
 
