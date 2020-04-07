@@ -1,4 +1,4 @@
-# ENPM673_Project3
+# ENPM673 Project 3
 
 Justin Albrecht and Brian Bock
 
@@ -10,11 +10,23 @@ This project uses a Gaussian Mixture Model to probabilisitically learn and then 
 ## Packages Required
 
 This entire project is written in Python 3.7 and requires the following packages:
+	
+	numpy
+	cv2
+	matplotlib
+	scipy.stats
+	math
+	matplotlib
+		matplotlib.patches
+	mpl_toolkits.mplot3d
+	random
+	os
 
-`numpy`, `cv2`, `matplotlib`, `random`, `os`, `mpl_toolkits`, `math`, `scipy`
 
-## How to Run
-Clone the entire directory. All files are required. 
+## Instructions for Running the Program
+Clone the entire repository (all files are required) to a directory you have write access to. We've included our trained Thetas as part of our submission, to save you the time intensive process of re-running that. The program is therefore pre-trained and ready to run. Open a new terminal window and navigate to the repository directory. Type `python buoy_detection.py`. If you have additional versions of python installed you may need to run `python3 buoy_detection.py` instead. 
+
+
 
 
 # How it Works
@@ -49,13 +61,17 @@ Green | 31 | 14
 **Notes:**
 Recognizing that our data might be more distinct in other color spaces, we built-in the option to work in either BGR or HSV color space, which can be changed via a simple toggle. For the sake of brevity, we'll be referring to image color channels as just BGR (regardless of the mode) so that we don't need to refer to both BGR and HSV. The steps are equally applicable for each color space. 
 
-We're only ever working with one color buoy at a time, and all the steps are then repeated for the subsequent buoy colors. It is therefore implicit when we say "buoy images" that we are referring to the buoy images of a particular color (yellow, orange, green).
 
-
-
-We take all of the buoy images and flatten them into three 1 dimensional arrays, one for each color channel, which are then stacked into a 3-dimensional array for each image. By selecting non-zero elements, we eliminate the black border from our elliptical mask. The flattened stacked buoy images are combined, so we have one huge *Nx3* numpy array, where there are *N* total pixels in all of the buoy images, and *3* is the number of color channels. This *N* is used many times in the next section, and always refers to this number (for each color buoy).
 
 
 
 ## Gaussian Mixture Modeling
 
+
+# Final Output
+![Color Rings](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/color_rings.gif)
+![Solid Circles](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/solid_bouys.gif)
+
+Buoys with Colored Rings:https://youtu.be/UGUHVrVdI2U
+
+Bupys with Colored Circles: https://youtu.be/aP2YAfDPRnQ
