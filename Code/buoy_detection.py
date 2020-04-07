@@ -1,7 +1,7 @@
 from EM import *
 import imutils
 
-def addContours(image):
+def addContours(image,segmented_frames,buoy_colors):
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     ret, bin_image = cv2.threshold(grey, 1, 255, cv2.THRESH_BINARY) 
     # cv2.imshow("bin",bin_image)
@@ -24,7 +24,7 @@ def addContours(image):
         diff=[]
 
        # Color (B,G,R)
-        color = (255, 255, 255) 
+        # color = (255, 255, 255) 
         # Line thickness of -1 = filled in 
         thickness = 2
         for contour in cnts:
@@ -50,10 +50,20 @@ def addContours(image):
             ((x, y), radius) = cv2.minEnclosingCircle(buoy_contour)
             A=math.pi*radius**2
             print(A)
+            count=[]
             if A>200:
+                for color in buoy_colors:
+                    buoy_region=segmented_frames[color][int(y-radius):int(y+radius),int(x-radius):int(x+radius),:]
+                    grey = cv2.cvtColor(buoy_region, cv2.COLOR_BGR2GRAY)
+                    count.append(len(np.nonzero(grey)[0]))
+                print(count)
+                max_ind = count.index(max(count))
 
+                bgr_colors={'orange':(14,127,255),'green':(96,215,30),'yellow':(77,245,255)}
 
-                image = cv2.circle(image, (int(x),int(y)), int(radius), color, thickness)
+                ring_color=bgr_colors[buoy_colors[max_ind]]
+
+                image = cv2.circle(image, (int(x),int(y)), int(radius), ring_color, thickness)
 
     return image
 
@@ -148,7 +158,7 @@ while input_video.isOpened():
     for color in buoy_colors:
         all_colors = cv2.bitwise_or(all_colors,segmented_frames[color])
 
-    contour_frame=addContours(all_colors)
+    contour_frame=addContours(all_colors,segmented_frames,buoy_colors)
     # cv2.imshow("Image",all_colors)
     # cv2.waitKey(0)
 
