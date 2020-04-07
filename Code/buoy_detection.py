@@ -3,7 +3,7 @@ import imutils
 
 def addContours(image,segmented_frames,buoy_colors):
     solid=False
-    
+
     blank_image=np.zeros((image.shape[0],image.shape[1],3),np.uint8)
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     ret, bin_image = cv2.threshold(grey, 1, 255, cv2.THRESH_BINARY) 
@@ -188,6 +188,7 @@ while input_video.isOpened():
         out_vid = cv2.VideoWriter(output_video, fourcc, fps_out, (combined_frame.shape[1],combined_frame.shape[0]))
 
     cv2.imshow("Frame",combined_frame)
+    # cv2.imwrite("finalframe.png",combined_frame)
     # if the user presses 'q' release the video which will exit the loop
     if cv2.waitKey(1) == ord('q'):
         input_video.release()
