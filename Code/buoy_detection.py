@@ -1,4 +1,68 @@
 from EM import *
+import imutils
+
+def addContours(image):
+    grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, bin_image = cv2.threshold(grey, 1, 255, cv2.THRESH_BINARY) 
+    # cv2.imshow("bin",bin_image)
+    # cv2.waitKey(0)
+
+    blurred_image=cv2.GaussianBlur(bin_image,(5,5),0)
+    # Find the contours of the threshed image
+    cnts=cv2.findContours(blurred_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+
+    if len(cnts)>0:
+        # Draw the contours on the image
+        # sort the contours to include only the three largest
+        cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:8]
+        # contour_image=cv2.drawContours(image, cnts, -1, (0,0,255), 2)
+        # cv2.imshow("bin",contour_image)
+        # cv2.waitKey(0)
+        # exit()
+
+        diff=[]
+
+       # Color (B,G,R)
+        color = (255, 255, 255) 
+        # Line thickness of -1 = filled in 
+        thickness = 2
+        for contour in cnts:
+
+
+            # c = max(cnts, key=cv2.contourArea)
+            ((x, y), radius) = cv2.minEnclosingCircle(contour)
+            # print(radius)
+            A=math.pi*radius**2
+            # print(A)
+            A_contour=cv2.contourArea(contour)
+            diff.append(abs(A-A_contour)/A)
+
+        # print(diff)
+        thresh=.4
+        circle_inds=[]
+        for i,val in enumerate(diff):
+            if val<thresh:
+                circle_inds.append(i)
+
+        for ind in circle_inds:
+            buoy_contour=cnts[ind]
+            ((x, y), radius) = cv2.minEnclosingCircle(buoy_contour)
+            A=math.pi*radius**2
+            print(A)
+            if A>200:
+
+
+                image = cv2.circle(image, (int(x),int(y)), int(radius), color, thickness)
+
+    return image
+
+
+
+
+
+
+
             
 buoy_colors = ['orange','green','yellow']
 training_channels = {'orange':(1,2),'green':(0,1),'yellow':(1,2)}
@@ -17,7 +81,7 @@ print(threshs)
 filename = '../media/detectbuoy.avi'
 input_video = cv2.VideoCapture(filename)
 
-start_frame = 20
+start_frame = 0
 input_video.set(1,start_frame)
 
 print('Writing to video. Please Wait.')
@@ -84,7 +148,14 @@ while input_video.isOpened():
     for color in buoy_colors:
         all_colors = cv2.bitwise_or(all_colors,segmented_frames[color])
 
-    combined_frame = np.concatenate((frame, all_colors), axis=1)
+    contour_frame=addContours(all_colors)
+    # cv2.imshow("Image",all_colors)
+    # cv2.waitKey(0)
+
+
+    combined_frame = np.concatenate((frame, contour_frame), axis=1)
+    
+
     if count == 0:
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         output_video = 'output.mp4'
