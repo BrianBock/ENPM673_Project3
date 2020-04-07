@@ -51,7 +51,7 @@ def addContours(image,segmented_frames,buoy_colors):
             A=math.pi*radius**2
             print(A)
             count=[]
-            if A>200:
+            if A>500:
                 for color in buoy_colors:
                     buoy_region=segmented_frames[color][int(y-radius):int(y+radius),int(x-radius):int(x+radius),:]
                     grey = cv2.cvtColor(buoy_region, cv2.COLOR_BGR2GRAY)
