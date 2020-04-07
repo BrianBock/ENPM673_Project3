@@ -24,12 +24,13 @@ This entire project is written in Python 3.7 and requires the following packages
 
 
 ## Instructions for Running the Program
-Clone the entire repository (all files are required) to a directory you have write access to. We've included our trained Thetas as part of our submission, to save you the time intensive process of re-running that. The program is therefore pre-trained and ready to run. Open a new terminal window and navigate to the repository directory. Type `python buoy_detection.py`. If you have additional versions of python installed you may need to run `python3 buoy_detection.py` instead. 
+Clone the entire repository (all files are required) to a directory you have write access to. We've included our trained Thetas as part of our submission, to save you the time intensive process of re-running that. The program is therefore pre-trained and ready to run. Open a new terminal window and navigate to the `Code` directory. Type `python buoy_detection.py`. If you have additional versions of python installed you may need to run `python3 buoy_detection.py` instead. 
 
 
 
 
 # How it Works
+Please see the report for the detailed program description. 
 
 ## Data Processing
 
@@ -67,7 +68,9 @@ Recognizing that our data might be more distinct in other color spaces, we built
 
 ## Gaussian Mixture Modeling
 
+The goal of this step is to generate a model that can be used to determine whether a pixel with given BGR values is likely to belong to the same color set as one of the buoys. We can accomplish this by using mixed Gaussian distributions. The mixture modeling allows us to generate K Gaussian distributions and combine them into a single density function. Each of the distributions is also weighted depending on it's importance in describing the overall data set.  
 
+For our data we decided to use two channels for each color group.
 
 
 
@@ -75,9 +78,7 @@ Recognizing that our data might be more distinct in other color spaces, we built
 
 ### Color Segmentation
 We use our pre-trained data and run our Test images through it. 
-Our `determineThresholds` function runs our Test images through our Trained Gaussians, and produces the probability that each pixel belongs to those Gaussians. The probabilities are summed over each of our $K$ Gaussians. Using an experimentally determined threshold, we take a certain percentage of those probabilities and define them as the our certainty for each buoy color. 
-
-We return to looking at the entire original video, one frame at a time. We convert the frame into a flat 2 channel array, to make it easier to work with. We then create a new black image with the same dimensions as the original frame, which will be the canvas on which we draw new pixel. If any pixel in the original frame meets our buoy color thresh criteria, that pixel coordinate in the black image is colored to match the buoy's color. The first few frames of the video are very noisy with the pool sidewall closely matching several buoy colors. 
+Our `determineThresholds` function runs our Test images through our Trained Gaussians, and produces the probability that each pixel belongs to those Gaussians. The probabilities are summed over each of our `K` Gaussians. By sorting the list of these probabilities we can determine a minimum threshold that will describe a pre-determined percentage of the test data. By increasing the percentage from the test data we can improve our recognition in the buoy but we will also have move false positives. We found that using a threshold that allowed 60\% of the training data to be classified was a good balance for false positives. 
 
 
 ![Colored pixels based on Gaussians](https://github.com/BrianBock/ENPM673_Project3/blob/master/images/all_colors.png)

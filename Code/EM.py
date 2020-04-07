@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
     K = 3
 
-    newEM = True
+    newEM = False
 
     Theta = {}
     if newEM:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     #     for point in points: 
     #         x.append(point[0])
     #         y.append(point[1])
-    #     ax.scatter(x,y,edgecolors = color,facecolors='none',linewidths=4)   
+    #     ax.scatter(x,y,edgecolors = color,facecolors='none',linewidths=2)   
 
     # patches = []
     
@@ -316,7 +316,7 @@ if __name__ == '__main__':
     #     data = generate_dataset(path,colorspace)
     #     g = data[1,:]
     #     r = data[2,:]
-    #     ax.scatter(g,r,edgecolors = 'none',facecolors=color,linewidths=4)
+    #     ax.scatter(g,r,edgecolors = 'none',facecolors=color,linewidths=2)
 
     # plt.xlim((0,255))
     # plt.xlabel('Intensity (G Channel)')
