@@ -2,6 +2,7 @@ from EM import *
 import imutils
 
 def addContours(image,segmented_frames,buoy_colors):
+    blank_image=np.zeros((image.shape[0],image.shape[1],3),np.uint8)
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     ret, bin_image = cv2.threshold(grey, 1, 255, cv2.THRESH_BINARY) 
     # cv2.imshow("bin",bin_image)
@@ -26,7 +27,7 @@ def addContours(image,segmented_frames,buoy_colors):
        # Color (B,G,R)
         # color = (255, 255, 255) 
         # Line thickness of -1 = filled in 
-        thickness = 2
+        thickness = -1
         for contour in cnts:
 
 
@@ -63,7 +64,7 @@ def addContours(image,segmented_frames,buoy_colors):
 
                 ring_color=bgr_colors[buoy_colors[max_ind]]
 
-                image = cv2.circle(image, (int(x),int(y)), int(radius), ring_color, thickness)
+                image = cv2.circle(blank_image, (int(x),int(y)), int(radius), ring_color, thickness)
 
     return image
 
